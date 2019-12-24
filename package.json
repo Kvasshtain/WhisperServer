@@ -1,0 +1,15 @@
+{
+  "name": "Whisper",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "ejs": "*",
+    "express": "^4.16.4",
+    "jsonfile": "^5.0.0",
+    "mongodb": "^3.1.0"
+  }
+}
