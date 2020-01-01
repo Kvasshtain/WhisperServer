@@ -1,54 +1,26 @@
-const mongoose = require("mongoose")
-const express = require("express")
+const mongoose = require('mongoose')
+const express = require('express')
+const passport = require('passport')
+const bodyParser = require("body-parser")
 
-const Schema = mongoose.Schema
 const app = express()
+
 const jsonParser = express.json()
+app.use(jsonParser)
 
+const User = require('./models/User')
+require('./config/passport')
 
+app.use(passport.initialize())
 
-// const fs = require("fs")
-// const jsonfile = require('jsonfile')
+app.use(bodyParser.json())
 
-const chatSchema = new Schema({
-    id: {
-        type: Number,
-        required: true,
-    },
-    name: {
-        type: String,
-        required: true,
-    }, 
-})
+const Chat = require('./models/Chat')
+const Message = require('./models/Message')
 
-const Chat = mongoose.model("Chat", chatSchema);
+ensureLoggedIn = require('connect-ensure-login').ensureLoggedIn
 
-const messageSchema = new Schema({
-    chatId: {
-        type: Number,
-        required: true,
-    },
-    time: {
-        type: Number,
-        required: true,
-    },
-    author: {
-        type: String,
-        required: true,
-    },
-    text: {
-        type: String,
-        required: true,
-    },
-    wasMessageReceived: {
-        type: Boolean,
-        required: true,
-    },
-},{
-    versionKey: false,
-})
-
-const Message = mongoose.model("Message", messageSchema);
+const authenticate = passport.authenticate('jwt')
 
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*')
@@ -61,18 +33,78 @@ app.use((req, res, next) => {
     })
 })
 
-mongoose.connect("mongodb://localhost:27017/whisperdb", { useNewUrlParser: true }, function(err){
-    if(err) return console.log(err);
-    app.listen(5000, function(){
-        console.log("Сервер ожидает подключения...");
+mongoose.connect('mongodb://localhost:27017/whisperdb', { useNewUrlParser: true }, function (err) {
+    if (err) return console.log(err)
+    app.listen(4000, function () {
+        console.log('Сервер ожидает подключения...')
     });
 });
 
-app.use(express.static("../client/whisper/build"));
+app.use(express.static('../client/build'))
 
-app.get("/messageListRequest", jsonParser, function (request, response) {
+const createEmptyFieldNameString = function (user) {
 
-    console.log("Messages list is requested")
+    if (!user.email) {
+        return 'email'
+    }
+
+    if (!user.password) {
+        return 'password'
+    }
+}
+
+app.post('/newUser', (req, res, next) => {
+    const { body: { user } } = req
+
+    let emptyFieldNameString = createEmptyFieldNameString(user)
+
+    if (emptyFieldNameString) {
+        return res.status(422).json({
+            errors: {
+                emptyFieldName: emptyFieldNameString,
+            },
+        })
+    }
+
+    const finalUser = new User(user)
+
+    finalUser.setPassword(user.password)
+
+    return finalUser.save()
+        .then(() => res.json({ user: finalUser.toAuthJSON() }))
+})
+
+app.post('/login', (req, res, next) => {
+    const { body: { user } } = req
+
+    let emptyFieldNameString = createEmptyFieldNameString(user)
+
+    if (emptyFieldNameString) {
+
+        return res.status(422).json({
+            errors: {
+                emptyFieldName: emptyFieldNameString,
+            },
+        })
+    }
+
+    return passport.authenticate('local', (err, passportUser, info) => {
+        if (err) {
+            return next(err)
+        }
+
+        if (passportUser) {
+            const user = passportUser
+            user.token = passportUser.generateJWT()
+
+            return res.json({ user: user.toAuthJSON() })
+        }
+
+        return status(400).info
+    })(req, res, next)
+})
+
+app.get('/messageListRequest', authenticate, function (request, response) {
 
     let messageList = []
 
@@ -85,15 +117,9 @@ app.get("/messageListRequest", jsonParser, function (request, response) {
     })
 })
 
-app.post("/messageReceive", jsonParser, function (request, response) {
+app.post('/messageReceive', authenticate, function (request, response) {
 
-    
-
-    if (!request.body) return response.sendStatus(400);
-
-    console.log(request.body)
-
-    console.log(request.body.chatId)
+    if (!request.body) return response.sendStatus(400)
 
     let message = request.body;
 
@@ -105,51 +131,12 @@ app.post("/messageReceive", jsonParser, function (request, response) {
         wasMessageReceived: message.wasMessageReceived,
     })
 
-    console.log("Post new message")
-    
     user.save(function (err) {
-        if (err) return console.log(err);
-        response.json(user);
+        if (err) return console.log(err)
+        response.json(user)
     })
 })
 
-// const messagesFile = 'message.json'
-
-//app.use(express.static("../client/whisper/build"));
-
-
-// app.get("/messageListRequest", jsonParser, function (request, response) {
-
-//     console.log("Messages list is requested")
-
-//     let messageList = []
-    
-//     jsonfile.readFile(messagesFile, function (err, obj) {
-//         if (err) console.error(err)
-//         messageList = obj
-    
-//         response.json(messageList)
-//     })
-// })
-
-// app.post("/messageReceive", jsonParser, function (request, response) {
-
-//     jsonfile.readFile(messagesFile)
-//         .then(
-//             obj => {
-    
-//                 let messageList = obj
-//                 messageList.push(request.body)
-//                 jsonfile.writeFile(messagesFile, messageList, function (err) {
-//                     if (err) console.error(err)
-//                 })
-//                 response.json(messageList)
-//             }
-//         )
-// })
-
-// app.listen(5000)
-
-process.on("SIGINT", () => {
+process.on('SIGINT', () => {
     process.exit()
 })
