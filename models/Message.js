@@ -11,7 +11,11 @@ const messageSchema = new Schema({
         type: Number,
         required: true,
     },
-    author: {
+    authorEmail: {
+        type: String,
+        required: true,
+    },
+    authorName: {
         type: String,
         required: true,
     },

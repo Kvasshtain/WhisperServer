@@ -138,7 +138,8 @@ app.post('/messageReceive', authenticate, function (request, response) {
     const newMessage = new Message({
         chatId: message.chatId,
         time: message.time,
-        author: message.author,
+        authorEmail: message.authorEmail,
+        authorName: message.authorName,
         text: message.text,
         wasMessageReceived: message.wasMessageReceived,
     })
@@ -146,7 +147,7 @@ app.post('/messageReceive', authenticate, function (request, response) {
     newMessage.save(function (err) {
         
         if (err) {
-            let err = { message: err }
+            let err = { message: 'Message save error' }
             return next(err)
         }
 
