@@ -9,6 +9,7 @@ const jsonParser = express.json()
 app.use(jsonParser)
 
 const User = require('./models/User')
+const userModel = mongoose.model('User')
 require('./config/passport')
 
 app.use(passport.initialize())
@@ -42,7 +43,7 @@ mongoose.connect('mongodb://localhost:27017/whisperdb', { useNewUrlParser: true 
 
 app.use(express.static('../client/build'))
 
-const createEmptyFieldNameString = function (user) {
+const createEmptyFieldNameString = (user) => {
 
     if (!user.email) {
         return 'email'
@@ -53,26 +54,41 @@ const createEmptyFieldNameString = function (user) {
     }
 }
 
+const errorHandlerMiddleware = (err, req, res, next) => {
+    res.json({ message: err.message })
+}
+
 app.post('/newUser', (req, res, next) => {
     const { body: { user } } = req
 
     let emptyFieldNameString = createEmptyFieldNameString(user)
 
     if (emptyFieldNameString) {
-        return res.status(422).json({
-            errors: {
-                emptyFieldName: emptyFieldNameString,
-            },
-        })
+        let err = { message: emptyFieldNameString }
+        return next(err)
     }
 
-    const finalUser = new User(user)
+    userModel.findOne({ email: user.email })
+        .then((user) => {
+            if (user) {
+                return err = { message: 'User with the same email already exists' }
+            }
+        })
+        .then((err) => {
+            
+            if(err) {
+                console.log(err.message)
+                return next(err)
+            }
 
-    finalUser.setPassword(user.password)
+            const finalUser = new User(user)
 
-    return finalUser.save()
-        .then(() => res.json({ user: finalUser.toAuthJSON() }))
-})
+            finalUser.setPassword(user.password)
+
+            return finalUser.save()
+                .then(() => res.json({ user: finalUser.toAuthJSON() }))
+        })
+}, errorHandlerMiddleware)
 
 app.post('/login', (req, res, next) => {
     const { body: { user } } = req
@@ -80,12 +96,8 @@ app.post('/login', (req, res, next) => {
     let emptyFieldNameString = createEmptyFieldNameString(user)
 
     if (emptyFieldNameString) {
-
-        return res.status(422).json({
-            errors: {
-                emptyFieldName: emptyFieldNameString,
-            },
-        })
+        let err = { message: emptyFieldNameString }
+        return next(err)
     }
 
     return passport.authenticate('local', (err, passportUser, info) => {
@@ -100,9 +112,9 @@ app.post('/login', (req, res, next) => {
             return res.json({ user: user.toAuthJSON() })
         }
 
-        return status(400).info
+        return res.status(400).info
     })(req, res, next)
-})
+}, errorHandlerMiddleware)
 
 app.get('/messageListRequest', authenticate, function (request, response) {
 
@@ -123,7 +135,7 @@ app.post('/messageReceive', authenticate, function (request, response) {
 
     let message = request.body;
 
-    const user = new Message({
+    const newMessage = new Message({
         chatId: message.chatId,
         time: message.time,
         author: message.author,
@@ -131,11 +143,17 @@ app.post('/messageReceive', authenticate, function (request, response) {
         wasMessageReceived: message.wasMessageReceived,
     })
 
-    user.save(function (err) {
-        if (err) return console.log(err)
-        response.json(user)
+    newMessage.save(function (err) {
+        
+        if (err) {
+            let err = { message: err }
+            return next(err)
+        }
+
+        response.json(newMessage)
     })
-})
+
+}, errorHandlerMiddleware)
 
 process.on('SIGINT', () => {
     process.exit()

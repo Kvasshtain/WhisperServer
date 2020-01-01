@@ -17,6 +17,7 @@ const UserSchema = new Schema({
     email: {
         type: String,
         required: true,
+        unique: true,
     },
     name: String,
     hash: {
@@ -24,7 +25,9 @@ const UserSchema = new Schema({
         required: true,
     },
     salt: String,
-});
+},{
+    versionKey: false,
+})
 
 const createHashFromPassword = function (password, salt) {
     return crypto.pbkdf2Sync(password, salt, iterations, keylen, digest).toString(stringType)
@@ -33,12 +36,12 @@ const createHashFromPassword = function (password, salt) {
 UserSchema.methods.setPassword = function (password) {
     this.salt = crypto.randomBytes(16).toString(stringType);
     this.hash = createHashFromPassword(password, this.salt)
-};
+}
 
 UserSchema.methods.checkPassword = function (password) {
     const hash = createHashFromPassword(password, this.salt)
     return this.hash === hash;
-};
+}
 
 UserSchema.methods.generateJWT = function () {
     const today = new Date();
@@ -60,7 +63,7 @@ UserSchema.methods.toAuthJSON = function () {
         name: this.name,
         token: this.generateJWT(),
     };
-};
+}
 
 const User = mongoose.model('User', UserSchema)
 

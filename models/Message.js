@@ -19,10 +19,6 @@ const messageSchema = new Schema({
         type: String,
         required: true,
     },
-    wasMessageReceived: {
-        type: Boolean,
-        required: true,
-    },
 },{
     versionKey: false,
 })
