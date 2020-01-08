@@ -1,20 +1,26 @@
 const express = require('express');
 const router = express.Router();
 const passport = require('passport')
-const { createEmptyFieldNameString, errorHandlerMiddleware } = require('../helper')
+const { checkUserFieldsAndReturnWrong, errorHandlerMiddleware } = require('../helper')
 const User = require('../models/User')
 
 router.post('/new', (req, res, next) => {
-    const { body: { user } } = req
 
-    let emptyFieldNameString = createEmptyFieldNameString(user)
+    if (!req.body) {
+        return res.sendStatus(400)
+    }
+    
+    const { body } = req
+    const { user } = body
 
-    if (emptyFieldNameString) {
-        let err = { message: emptyFieldNameString }
+    let wrongFieldNameString = checkUserFieldsAndReturnWrong(user)
+
+    if (wrongFieldNameString) {
+        let err = { message: wrongFieldNameString }
         return next(err)
     }
 
-    userModel.findOne({ email: user.email })
+    User.findOne({ email: user.email })
         .then((user) => {
             if (user) {
                 return err = { message: 'User with the same email already exists' }
@@ -22,24 +28,26 @@ router.post('/new', (req, res, next) => {
         })
         .then((err) => {
             
-            if(err) {
-                console.log(err.message)
-                return next(err)
-            }
+            if(err) return next(err)
 
-            const finalUser = new User(user)
+            const newUser = new User(user)
 
-            finalUser.setPassword(user.password)
+            newUser.setPassword(user.password)
 
-            return finalUser.save()
-                .then(() => res.json({ user: finalUser.toAuthJSON() }))
+            return newUser.save()
+                .then(() => res.json({ user: newUser.toAuthJSON() }))
         })
 }, errorHandlerMiddleware)
 
 router.post('/login', (req, res, next) => {
+    
+    if (!req.body) {
+        return res.sendStatus(400)
+    }
+
     const { body: { user } } = req
 
-    let emptyFieldNameString = createEmptyFieldNameString(user)
+    let emptyFieldNameString = checkUserFieldsAndReturnWrong(user)
 
     if (emptyFieldNameString) {
         let err = { message: emptyFieldNameString }
@@ -47,6 +55,7 @@ router.post('/login', (req, res, next) => {
     }
 
     return passport.authenticate('local', (err, passportUser, info) => {
+        
         if (err) {
             return next(err)
         }

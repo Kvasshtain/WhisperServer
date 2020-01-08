@@ -6,42 +6,37 @@ const Message = require('../models/Message')
 
 const authenticate = passport.authenticate('jwt')
 
-router.get('/listRequest', authenticate, function (request, response) {
+router.get('/listRequest', authenticate, (req, res, next) => {
 
-    let messageList = []
+    let chatId = req.query.chat_id
 
-    Message.find({}, function (err, obj) {
+    Message.find({'chatId': chatId}, (err, messagesList) => {
 
-        if (err) return console.error(err)
-        messageList = obj
+        if (err) {
+            return next(err)
+        }
 
-        response.json(messageList)
+        res.json(messagesList)
     })
-})
+}, errorHandlerMiddleware)
 
-router.post('/new', authenticate, function (request, response) {
+router.post('/new', authenticate, (req, res, next) => {
 
-    if (!request.body) return response.sendStatus(400)
+    if (!req.body) {
+        return res.sendStatus(400)
+    }
 
-    let message = request.body;
+    let message = req.body;
 
-    const newMessage = new Message({
-        chatId: message.chatId,
-        time: message.time,
-        authorEmail: message.authorEmail,
-        authorName: message.authorName,
-        text: message.text,
-        wasMessageReceived: message.wasMessageReceived,
-    })
+    const newMessage = new Message(message)
 
     newMessage.save(function (err) {
         
         if (err) {
-            let err = { message: 'Message save error' }
             return next(err)
         }
 
-        response.json(newMessage)
+        res.json(newMessage)
     })
 
 }, errorHandlerMiddleware)

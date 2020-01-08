@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken')
 const { Schema } = mongoose
 
 const decimalBase = 10
+const sizeRandomBytes = 16
 const expiration = require('../appConfig').expiration
 const iterations = require('../appConfig').iterations
 const keylen = require('../appConfig').keylen
@@ -34,7 +35,7 @@ const createHashFromPassword = function (password, salt) {
 }
 
 UserSchema.methods.setPassword = function (password) {
-    this.salt = crypto.randomBytes(16).toString(stringType);
+    this.salt = crypto.randomBytes(sizeRandomBytes).toString(stringType);
     this.hash = createHashFromPassword(password, this.salt)
 }
 
@@ -64,6 +65,13 @@ UserSchema.methods.toAuthJSON = function () {
         token: this.generateJWT(),
     };
 }
+
+UserSchema.methods.toJSON = function() {
+    var obj = this.toObject();
+    delete obj.hash;
+    delete obj.salt;
+    return obj;
+   }
 
 const User = mongoose.model('User', UserSchema)
 
