@@ -27,7 +27,7 @@ mongoose.connect('mongodb://localhost:27017/whisperdb', { useNewUrlParser: true 
     });
 });
 
-app.use(express.static('../client/build'))
+app.use(express.static('./static/build'))
 
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*')
