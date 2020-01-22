@@ -9,8 +9,16 @@ const authenticate = passport.authenticate('jwt')
 router.get('/listRequest', authenticate, (req, res, next) => {
 
     let chatId = req.query.chat_id
+    let oldestMessageTime = req.query.oldest_message_time
+    let fetchMessagesCount = req.query.fetch_messages_count
 
-    Message.find({'chatId': chatId}, (err, messagesList) => {
+    Message
+      .find({'chatId': chatId, 'time': {'$lt': oldestMessageTime}})
+      .limit(+fetchMessagesCount)
+      .sort({'time': -1})
+      .exec((err, messagesList) => {
+
+        messagesList.reverse()
 
         if (err) {
             return next(err)
