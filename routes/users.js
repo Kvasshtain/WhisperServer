@@ -4,6 +4,8 @@ const passport = require('passport')
 const { checkUserFieldsAndReturnWrong, errorHandlerMiddleware } = require('../helper')
 const User = require('../models/User')
 
+const authenticate = passport.authenticate('jwt')
+
 router.post('/new', (req, res, next) => {
 
     if (!req.body) {
@@ -69,6 +71,22 @@ router.post('/login', (req, res, next) => {
 
         return res.status(400).info
     })(req, res, next)
+}, errorHandlerMiddleware)
+
+router.get('/search', authenticate, (req, res, next) => {
+
+    let email = req.query.user_seek_data
+
+    User
+      .find({'email': email})
+      .exec((err, users) => {
+
+        if (err) {
+            return next(err)
+        }
+
+        res.json(users)
+    })
 }, errorHandlerMiddleware)
 
 module.exports = router

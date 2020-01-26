@@ -25,39 +25,40 @@ router.get('/listRequest', authenticate, (req, res, next) => {
 router.post('/new', authenticate, (req, res, next) => {
     const { body: { chat } } = req
 
-    let wrongFieldNameString = checkChatFieldsAndReturnWrong(chat)
+    const wrongFieldNameString = checkChatFieldsAndReturnWrong(chat)
     
     if (wrongFieldNameString) {
 
-        let err = { message: wrongFieldNameString }
+        const err = { message: wrongFieldNameString }
 
         return next(err)
     }
 
+    const newChat = new Chat(chat)
 
-    Chat.findOne({ name: chat.name })
-        .then((oldChat) => {
+    newChat.save(function (err) {
 
-            if (oldChat) {
-                Chat.updateOne({ name: chat.name }, { users: chat.users }, function (err, result) {
+        if (err) {
+            return next(err)
+        }
 
-                    if (err) {
-                        return next(err)
-                    }
-                })
-            }
+        res.json({ chat: newChat })
+    })
 
-            const newChat = new Chat(chat)
+}, errorHandlerMiddleware)
 
-            newChat.save(function (err) {
+router.post('/addNewUser', authenticate, (req, res, next) => {
+    const { body: { chatId, newUserId } } = req
 
-                if (err) {
-                    return next(err)
-                }
-        
-                res.json({chat: newChat})
-            })
-        })
+    Chat.update({ _id: chatId }, { $push: { users: newUserId } })
+    .exec((err, updatedChat) => {
+
+        if (err) {
+            return next(err)
+        }
+
+        res.json({ chat: updatedChat })
+    })
 }, errorHandlerMiddleware)
 
 module.exports = router
