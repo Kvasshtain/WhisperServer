@@ -8,7 +8,7 @@ const authenticate = passport.authenticate('jwt')
 
 router.get('/listRequest', authenticate, (req, res, next) => {
 
-    let userId = req.query.user_id
+    const userId = req.query.user_id
 
     Chat.find({'users': userId})
     .populate('users')

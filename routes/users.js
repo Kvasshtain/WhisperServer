@@ -49,7 +49,7 @@ router.post('/login', (req, res, next) => {
 
     const { body: { user } } = req
 
-    let emptyFieldNameString = checkUserFieldsAndReturnWrong(user)
+    const emptyFieldNameString = checkUserFieldsAndReturnWrong(user)
 
     if (emptyFieldNameString) {
         let err = { message: emptyFieldNameString }
@@ -75,7 +75,7 @@ router.post('/login', (req, res, next) => {
 
 router.get('/search', authenticate, (req, res, next) => {
 
-    let email = req.query.user_seek_data
+    const email = req.query.user_seek_data
 
     User
       .find({'email': email})
