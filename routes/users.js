@@ -3,13 +3,15 @@ const router = express.Router();
 const passport = require('passport')
 const { checkUserFieldsAndReturnWrong, errorHandlerMiddleware } = require('../helper')
 const User = require('../models/User')
+const createError = require('http-errors')
+
 
 const authenticate = passport.authenticate('jwt')
 
 router.post('/new', (req, res, next) => {
 
     if (!req.body) {
-        return res.sendStatus(400)
+        return next(createError(400, 'Bad request. Body not found.'))
     }
 
     const { body } = req
@@ -18,8 +20,7 @@ router.post('/new', (req, res, next) => {
     let wrongFieldNameString = checkUserFieldsAndReturnWrong(user)
 
     if (wrongFieldNameString) {
-        let err = { message: wrongFieldNameString }
-        return next(err)
+        return next(createError(400, wrongFieldNameString))
     }
 
     const newUser = new User(user)
@@ -29,15 +30,17 @@ router.post('/new', (req, res, next) => {
     return newUser.save()
         .then(() => res.json({ user: newUser.toAuthJSON() }))
         .catch(function (err) {
-            return next(err)
+            if (err.code === 11000) {
+                return next(createError(500, 'User with same email already exists'))
+            }
         })
 
-}, errorHandlerMiddleware)
+})
 
 router.post('/login', (req, res, next) => {
     
     if (!req.body) {
-        return res.sendStatus(400)
+        return next(createError(400, 'Bad request. Body not found.'))
     }
 
     const { body: { user } } = req
@@ -45,14 +48,13 @@ router.post('/login', (req, res, next) => {
     const emptyFieldNameString = checkUserFieldsAndReturnWrong(user)
 
     if (emptyFieldNameString) {
-        let err = { message: emptyFieldNameString }
-        return next(err)
+        return next(createError(400, emptyFieldNameString))
     }
 
     return passport.authenticate('local', (err, passportUser, info) => {
         
         if (err) {
-            return next(err)
+            return next(createError(400, err.message))
         }
 
         if (passportUser) {
@@ -62,16 +64,16 @@ router.post('/login', (req, res, next) => {
             return res.json({ user: user.toAuthJSON() })
         }
 
-        return res.status(400).info
+        return next(createError(400, err.message))
     })(req, res, next)
-}, errorHandlerMiddleware)
+})
 
 router.get('/search', authenticate, (req, res, next) => {
 
     const email = req.query.user_seek_data
 
     if (!email) {
-        return res.sendStatus(400)
+        return next(createError(400, 'Bad request. Email not found.'))
     }
 
     User
@@ -79,11 +81,11 @@ router.get('/search', authenticate, (req, res, next) => {
       .exec((err, users) => {
 
         if (err) {
-            return next(err)
+            return next(createError(400, err.message))
         }
 
         res.json(users)
     })
-}, errorHandlerMiddleware)
+})
 
 module.exports = router

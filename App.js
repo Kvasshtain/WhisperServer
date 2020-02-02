@@ -12,6 +12,8 @@ const messagesRouter = require('./routes/messages')
 const usersRouter = require('./routes/users')
 const chatsRouter = require('./routes/chats')
 
+const { errorHandlerMiddleware } = require('./helper')
+
 require('./config/passport')
 
 app.use(passport.initialize())
@@ -43,6 +45,15 @@ app.use((req, res, next) => {
 app.use('/users', usersRouter)
 app.use('/messages', messagesRouter)
 app.use('/chats', chatsRouter)
+
+app.use((err, req, res, next) => {
+    res.status(err.status || 500)
+    res.json({
+        status: err.status,
+        message: err.message,
+        stack: err.stack
+    })
+})
 
 process.on('SIGINT', () => {
     process.exit()

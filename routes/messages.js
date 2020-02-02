@@ -3,6 +3,7 @@ const router = express.Router();
 const passport = require('passport')
 const { errorHandlerMiddleware } = require('../helper')
 const Message = require('../models/Message')
+const createError = require('http-errors')
 
 const authenticate = passport.authenticate('jwt')
 
@@ -12,12 +13,16 @@ router.get('/listRequest', authenticate, (req, res, next) => {
     const oldestMessageTime = req.query.oldest_message_time
     const fetchMessagesCount = req.query.fetch_messages_count
 
-    if (!chatId
-        ||
-        !oldestMessageTime
-        ||
-        !fetchMessagesCount) {
-        return res.sendStatus(400)
+    if (!chatId) {
+        return next(createError(400, 'Bad request. ChatId not found.'))
+    }
+
+    if (!oldestMessageTime) {
+        return next(createError(400, 'Bad request. OldestMessageTime not found.'))
+    }
+
+    if (!fetchMessagesCount) {
+        return next(createError(400, 'Bad request. FetchMessagesCount not found.'))
     }
 
     Message
@@ -29,20 +34,24 @@ router.get('/listRequest', authenticate, (req, res, next) => {
             messagesList.reverse()
 
             if (err) {
-                return next(err)
+                return next(createError(400, err.message))
             }
 
             res.json(messagesList)
         })
-}, errorHandlerMiddleware)
+})
 
 router.get('/lastMessages', authenticate, (req, res, next) => {
 
     const chatId = req.query.chat_id
     const newestMessageTime = req.query.newest_message_time
 
-    if (!chatId || !newestMessageTime) {
-        return res.sendStatus(400)
+    if (!chatId) {
+        return next(createError(400, 'Bad request. ChatId not found.'))
+    }
+
+    if (!newestMessageTime) {
+        return next(createError(400, 'Bad request. NewestMessageTime not found.'))
     }
     
     Message
@@ -50,17 +59,17 @@ router.get('/lastMessages', authenticate, (req, res, next) => {
         .exec((err, messagesList) => {
 
             if (err) {
-                return next(err)
+                return next(createError(400, err.message))
             }
 
             res.json(messagesList)
         })
-}, errorHandlerMiddleware)
+})
 
 router.post('/new', authenticate, (req, res, next) => {
 
     if (!req.body) {
-        return res.sendStatus(400)
+        return next(createError(400, 'Bad request. Body not found.'))
     }
 
     const message = req.body;
@@ -70,12 +79,12 @@ router.post('/new', authenticate, (req, res, next) => {
     newMessage.save(function (err) {
 
         if (err) {
-            return next(err)
+            return next(createError(400, err.message))
         }
 
         res.json(newMessage)
     })
 
-}, errorHandlerMiddleware)
+})
 
 module.exports = router
