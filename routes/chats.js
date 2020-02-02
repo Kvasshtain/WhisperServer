@@ -10,6 +10,10 @@ router.get('/listRequest', authenticate, (req, res, next) => {
 
     const userId = req.query.user_id
 
+    if (!userId) {
+        return res.sendStatus(400)
+    }
+
     Chat.find({'users': userId})
     .populate('users')
     .exec((err, chatsList) => {
@@ -23,6 +27,11 @@ router.get('/listRequest', authenticate, (req, res, next) => {
 }, errorHandlerMiddleware)
 
 router.post('/new', authenticate, (req, res, next) => {
+    
+    if (!req.body) {
+        return res.sendStatus(400)
+    }
+    
     const { body: { chat } } = req
 
     const wrongFieldNameString = checkChatFieldsAndReturnWrong(chat)
@@ -48,6 +57,11 @@ router.post('/new', authenticate, (req, res, next) => {
 }, errorHandlerMiddleware)
 
 router.post('/addNewUser', authenticate, (req, res, next) => {
+    
+    if (!req.body) {
+        return res.sendStatus(400)
+    }
+
     const { body: { chatId, newUserId } } = req
 
     Chat.update({ _id: chatId }, { $push: { users: newUserId } })

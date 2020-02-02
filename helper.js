@@ -20,8 +20,10 @@ const checkChatFieldsAndReturnWrong = (chat) => {
     }
 }
 
-const errorHandlerMiddleware = (err, req, res, next) => {
-    res.json({ message: err.message })
+const errorHandlerMiddleware = (err, req, res) => {
+    if (err) {
+        res.status(500).send({ message: err })
+    }
 }
 
 module.exports = {

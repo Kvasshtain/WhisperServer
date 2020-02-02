@@ -11,7 +11,7 @@ router.post('/new', (req, res, next) => {
     if (!req.body) {
         return res.sendStatus(400)
     }
-    
+
     const { body } = req
     const { user } = body
 
@@ -22,23 +22,16 @@ router.post('/new', (req, res, next) => {
         return next(err)
     }
 
-    User.findOne({ email: user.email })
-        .then((user) => {
-            if (user) {
-                return err = { message: 'User with the same email already exists' }
-            }
+    const newUser = new User(user)
+
+    newUser.setPassword(user.password)
+
+    return newUser.save()
+        .then(() => res.json({ user: newUser.toAuthJSON() }))
+        .catch(function (err) {
+            return next(err)
         })
-        .then((err) => {
-            
-            if(err) return next(err)
 
-            const newUser = new User(user)
-
-            newUser.setPassword(user.password)
-
-            return newUser.save()
-                .then(() => res.json({ user: newUser.toAuthJSON() }))
-        })
 }, errorHandlerMiddleware)
 
 router.post('/login', (req, res, next) => {
@@ -76,6 +69,10 @@ router.post('/login', (req, res, next) => {
 router.get('/search', authenticate, (req, res, next) => {
 
     const email = req.query.user_seek_data
+
+    if (!email) {
+        return res.sendStatus(400)
+    }
 
     User
       .find({'email': email})

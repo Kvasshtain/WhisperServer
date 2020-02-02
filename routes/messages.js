@@ -12,6 +12,14 @@ router.get('/listRequest', authenticate, (req, res, next) => {
     const oldestMessageTime = req.query.oldest_message_time
     const fetchMessagesCount = req.query.fetch_messages_count
 
+    if (!chatId
+        ||
+        !oldestMessageTime
+        ||
+        !fetchMessagesCount) {
+        return res.sendStatus(400)
+    }
+
     Message
         .find({ 'chatId': chatId, 'time': { '$lt': oldestMessageTime } })
         .limit(+fetchMessagesCount)
@@ -33,13 +41,13 @@ router.get('/lastMessages', authenticate, (req, res, next) => {
     const chatId = req.query.chat_id
     const newestMessageTime = req.query.newest_message_time
 
-    console.log(newestMessageTime)
-
+    if (!chatId || !newestMessageTime) {
+        return res.sendStatus(400)
+    }
+    
     Message
         .find({ 'chatId': chatId, 'time': { '$gt': newestMessageTime } })
         .exec((err, messagesList) => {
-
-            console.log(messagesList)
 
             if (err) {
                 return next(err)

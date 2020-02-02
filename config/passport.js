@@ -28,6 +28,7 @@ passport.use(new LocalStrategy({
         .catch(done)
 }))
 
+//https://www.npmjs.com/package/passport-jwt see jsonWebTokenOptions option to set maxAge
 const jwtOptions = {
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
     secretOrKey: jwtSecret
