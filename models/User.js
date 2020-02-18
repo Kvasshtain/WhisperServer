@@ -14,64 +14,75 @@ const stringType = require('../appConfig').stringType
 const millisecondsToSeconds = require('../appConfig').millisecondsToSeconds
 const jwtSecret = require('../appConfig').jwtSecret
 
-const UserSchema = new Schema({
+const UserSchema = new Schema(
+  {
     email: {
-        type: String,
-        required: true,
-        unique: true,
+      type: String,
+      required: true,
+      unique: true,
     },
     name: String,
     hash: {
-        type: String,
-        required: true,
+      type: String,
+      required: true,
     },
     salt: String,
-},{
+  },
+  {
     versionKey: false,
-})
+  }
+)
 
-const createHashFromPassword = function (password, salt) {
-    return crypto.pbkdf2Sync(password, salt, iterations, keylen, digest).toString(stringType)
+const createHashFromPassword = function(password, salt) {
+  return crypto
+    .pbkdf2Sync(password, salt, iterations, keylen, digest)
+    .toString(stringType)
 }
 
-UserSchema.methods.setPassword = function (password) {
-    this.salt = crypto.randomBytes(sizeRandomBytes).toString(stringType);
-    this.hash = createHashFromPassword(password, this.salt)
+UserSchema.methods.setPassword = function(password) {
+  this.salt = crypto.randomBytes(sizeRandomBytes).toString(stringType)
+  this.hash = createHashFromPassword(password, this.salt)
 }
 
-UserSchema.methods.checkPassword = function (password) {
-    const hash = createHashFromPassword(password, this.salt)
-    return this.hash === hash;
+UserSchema.methods.checkPassword = function(password) {
+  const hash = createHashFromPassword(password, this.salt)
+  return this.hash === hash
 }
 
-UserSchema.methods.generateJWT = function () {
-    const today = new Date();
-    const expirationDate = new Date(today)
-    expirationDate.setDate(today.getDate() + expiration)
+UserSchema.methods.generateJWT = function() {
+  const today = new Date()
+  const expirationDate = new Date(today)
+  expirationDate.setDate(today.getDate() + expiration)
 
-    return jwt.sign({
-        email: this.email,
-        name: this.name,
-        id: this._id,
-        exp: parseInt(expirationDate.getTime() * millisecondsToSeconds, decimalBase),
-    }, jwtSecret);
+  return jwt.sign(
+    {
+      email: this.email,
+      name: this.name,
+      id: this._id,
+      exp: parseInt(
+        expirationDate.getTime() * millisecondsToSeconds,
+        decimalBase
+      ),
+    },
+    jwtSecret
+  )
 }
 
-UserSchema.methods.toAuthJSON = function () {
-    return {
-        _id: this._id,
-        email: this.email,
-        name: this.name,
-        token: this.generateJWT(),
-    };
+UserSchema.methods.toAuthJSON = function() {
+  return {
+    _id: this._id,
+    email: this.email,
+    name: this.name,
+    token: this.generateJWT(),
+  }
 }
 
 UserSchema.methods.toJSON = function() {
-    var obj = this.toObject();
-    delete obj.hash;
-    delete obj.salt;
-    return obj;
-   }
+  var obj = this.toObject()
+  delete obj.hash
+  delete obj.salt
+  return obj
+}
 
 const User = mongoose.model('User', UserSchema)
 
