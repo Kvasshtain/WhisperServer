@@ -1,10 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const passport = require('passport')
-const {
-  checkUserFieldsAndReturnWrong,
-  errorHandlerMiddleware,
-} = require('../helper')
+const { checkUserFieldsAndReturnWrong } = require('../helper')
 const User = require('../models/User')
 const createError = require('http-errors')
 

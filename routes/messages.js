@@ -1,7 +1,6 @@
 const express = require('express')
 const router = express.Router()
 const passport = require('passport')
-const { errorHandlerMiddleware } = require('../helper')
 const Message = require('../models/Message')
 const createError = require('http-errors')
 
