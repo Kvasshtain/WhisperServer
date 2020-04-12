@@ -60,7 +60,7 @@ router.post('/addNewUser', authenticate, (req, res, next) => {
     body: { chatId, newUserId },
   } = req
 
-  Chat.update({ _id: chatId }, { $push: { users: newUserId } }).exec(
+  Chat.update({ _id: chatId }, { $addToSet: { users: newUserId } }).exec(
     (err, updatedChat) => {
       if (err) {
         return next(createError(400, err.message))

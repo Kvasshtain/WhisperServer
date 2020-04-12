@@ -2,6 +2,7 @@ const mongoose = require('mongoose')
 const express = require('express')
 const passport = require('passport')
 const bodyParser = require('body-parser')
+const http = require('http')
 
 const app = express()
 
@@ -12,8 +13,6 @@ const messagesRouter = require('./routes/messages')
 const usersRouter = require('./routes/users')
 const chatsRouter = require('./routes/chats')
 
-const { errorHandlerMiddleware } = require('./helper')
-
 require('./config/passport')
 
 app.use(passport.initialize())
@@ -22,12 +21,16 @@ app.use(bodyParser.json())
 
 ensureLoggedIn = require('connect-ensure-login').ensureLoggedIn
 
+const httpServer = http.createServer(app)
+
+require('./webSocket/webSocketInit')(httpServer)
+
 mongoose.connect(
   'mongodb://localhost:27017/whisperdb',
   { useNewUrlParser: true },
   function(err) {
     if (err) return console.log(err)
-    app.listen(4000, function() {
+    httpServer.listen(4000, function() {
       console.log('Сервер ожидает подключения...')
     })
   }
