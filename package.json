@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node app.js",
     "babel-node": "babel-node",
-    "build": "NODE_ENV=production babel src --out-dir dist --source-maps inline",
+    "build": "cross-env NODE_ENV=production babel src --out-dir dist --source-maps inline",
     "prepublishOnly": "npm run build",
     "precommit": "lint-staged",
     "eslint": "node_modules/.bin/eslint src/"
@@ -24,18 +24,21 @@
     "mongoose": "^5.8.3",
     "passport": "^0.4.1",
     "passport-jwt": "^4.0.0",
-    "passport-local": "^1.0.0"
+    "passport-local": "^1.0.0",
+    "ws": "^7.3.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.8.4",
     "@babel/core": "^7.8.4",
     "@babel/node": "^7.8.4",
     "@babel/preset-env": "^7.8.4",
+    "cross-env": "^7.0.2",
     "eslint": "^6.8.0",
     "eslint-config-prettier": "^6.10.0",
     "eslint-plugin-prettier": "^3.1.2",
     "husky": "^4.2.3",
     "lint-staged": "^10.0.7",
+    "nodemon": "^2.0.4",
     "prettier": "^1.19.1"
   },
   "lint-staged": {
