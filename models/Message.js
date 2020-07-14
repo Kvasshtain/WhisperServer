@@ -4,6 +4,10 @@ const { Schema } = mongoose
 
 const messageSchema = new Schema(
   {
+    clientSideId: {
+      type: String,
+      require: true,
+    },
     chatId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Chat',
