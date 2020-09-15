@@ -37,7 +37,7 @@ mongoose.connect(
   }
 )
 
-app.use(express.static('./static/build'))
+app.use(express.static('./static'))
 
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*')
