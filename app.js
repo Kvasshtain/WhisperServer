@@ -3,6 +3,7 @@ const express = require('express')
 const passport = require('passport')
 const bodyParser = require('body-parser')
 const http = require('http')
+const port = process.env.PORT || 4000;
 
 const app = express()
 
@@ -30,7 +31,7 @@ mongoose.connect(
   { useNewUrlParser: true },
   function(err) {
     if (err) return console.log(err)
-    httpServer.listen(4000, function() {
+    httpServer.listen(port, function() {
       console.log('Сервер ожидает подключения...')
     })
   }
