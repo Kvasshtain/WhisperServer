@@ -2,8 +2,8 @@ const express = require('express')
 const router = express.Router()
 const passport = require('passport')
 const { checkUserFieldsAndReturnWrong } = require('../helper')
-const User = require('../models/User')
 const createError = require('http-errors')
+const dal = require('../mongo/dal')
 
 const authenticate = passport.authenticate('jwt')
 
@@ -21,18 +21,9 @@ router.post('/new', (req, res, next) => {
     return next(createError(400, wrongFieldNameString))
   }
 
-  const newUser = new User(user)
+  const json = res.json.bind(res)
 
-  newUser.setPassword(user.password)
-
-  return newUser
-    .save()
-    .then(() => res.json({ user: newUser.toAuthJSON() }))
-    .catch(function(err) {
-      if (err.code === 11000) {
-        return next(createError(500, 'User with same email already exists'))
-      }
-    })
+  dal.saveNewUser(user, json, next)
 })
 
 router.post('/login', (req, res, next) => {
@@ -73,13 +64,9 @@ router.get('/search', authenticate, (req, res, next) => {
     return next(createError(400, 'Bad request. Email not found.'))
   }
 
-  User.find({ email: email }).exec((err, users) => {
-    if (err) {
-      return next(createError(400, err.message))
-    }
+  const json = res.json.bind(res)
 
-    res.json(users)
-  })
+  dal.findUser(email, json, next)
 })
 
 module.exports = router

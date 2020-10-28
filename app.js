@@ -26,20 +26,20 @@ const httpServer = http.createServer(app)
 
 require('./webSocket/webSocketInit')(httpServer)
 
-// mongoose.connect(
-//   'mongodb://localhost:27017/whisperdb',
-//   { useNewUrlParser: true },
-//   function(err) {
-//     if (err) return console.log(err)
-//     httpServer.listen(port, function() {
-//       console.log('Сервер ожидает подключения...')
-//     })
-//   }
-// )
+mongoose.connect(
+  'mongodb://localhost:27017/whisperdb',
+  { useNewUrlParser: true },
+  function(err) {
+    if (err) return console.log(err)
+    httpServer.listen(port, function() {
+      console.log('Сервер ожидает подключения...')
+    })
+  }
+)
 
-httpServer.listen(port, function() {
-  console.log('Сервер ожидает подключения...')
-})
+// httpServer.listen(port, function() {
+//   console.log('Сервер ожидает подключения...')
+// })
 
 app.use(express.static('./static'))
 

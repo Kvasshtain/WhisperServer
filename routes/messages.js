@@ -1,8 +1,8 @@
 const express = require('express')
 const router = express.Router()
 const passport = require('passport')
-const Message = require('../models/Message')
 const createError = require('http-errors')
+const dal = require('../mongo/dal')
 
 const authenticate = passport.authenticate('jwt')
 
@@ -23,18 +23,9 @@ router.get('/listRequest', authenticate, (req, res, next) => {
     return next(createError(400, 'Bad request. FetchMessagesCount not found.'))
   }
 
-  Message.find({ chatId: chatId, time: { $lt: oldestMessageTime } })
-    .limit(+fetchMessagesCount)
-    .sort({ time: -1 })
-    .exec((err, messagesList) => {
-      messagesList.reverse()
+  const json = res.json.bind(res)
 
-      if (err) {
-        return next(createError(400, err.message))
-      }
-
-      res.json(messagesList)
-    })
+  dal.getMessages(chatId, oldestMessageTime, fetchMessagesCount, json, next)
 })
 
 router.get('/lastMessages', authenticate, (req, res, next) => {
@@ -49,15 +40,9 @@ router.get('/lastMessages', authenticate, (req, res, next) => {
     return next(createError(400, 'Bad request. NewestMessageTime not found.'))
   }
 
-  Message.find({ chatId: chatId, time: { $gt: newestMessageTime } }).exec(
-    (err, messagesList) => {
-      if (err) {
-        return next(createError(400, err.message))
-      }
+  const json = res.json.bind(res)
 
-      res.json(messagesList)
-    }
-  )
+  dal.getLastMessages(chatId, newestMessageTime, json, next)
 })
 
 router.post('/new', authenticate, (req, res, next) => {
@@ -67,15 +52,9 @@ router.post('/new', authenticate, (req, res, next) => {
 
   const message = req.body
 
-  const newMessage = new Message(message)
+  const json = res.json.bind(res)
 
-  newMessage.save(function(err) {
-    if (err) {
-      return next(createError(400, err.message))
-    }
-
-    res.json(newMessage)
-  })
+  dal.saveNewMessage(message, json, next)
 })
 
 module.exports = router

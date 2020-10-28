@@ -1,9 +1,7 @@
-const mongoose = require('mongoose')
 const passport = require('passport')
 const LocalStrategy = require('passport-local')
 const { Strategy: JwtStrategy, ExtractJwt } = require('passport-jwt')
-
-const userModel = mongoose.model('User')
+const dal = require('../mongo/dal')
 
 const jwtSecret = require('../appConfig').jwtSecret
 
@@ -15,20 +13,7 @@ passport.use(
       session: false,
     },
     (email, password, done) => {
-      userModel
-        .findOne({ email })
-        .then((user, err) => {
-          if (err) {
-            return done(err)
-          }
-
-          if (!user || !user.checkPassword(password)) {
-            return done({ message: 'email or passwordis invalid' }, false)
-          }
-
-          return done(null, user)
-        })
-        .catch(done)
+      dal.checkUserPassword(email, password, done)
     }
   )
 )
@@ -41,16 +26,7 @@ const jwtOptions = {
 
 passport.use(
   new JwtStrategy(jwtOptions, function(payload, done) {
-    userModel.findById(payload.id, (err, user) => {
-      if (err) {
-        return done(err)
-      }
-      if (user) {
-        done(null, user)
-      } else {
-        done(null, false)
-      }
-    })
+    dal.findUserById(payload.id, done)
   })
 )
 

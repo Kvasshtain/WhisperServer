@@ -2,8 +2,8 @@ const express = require('express')
 const router = express.Router()
 const passport = require('passport')
 const { checkChatFieldsAndReturnWrong } = require('../helper')
-const Chat = require('../models/Chat')
 const createError = require('http-errors')
+const dal = require('../mongo/dal')
 
 const authenticate = passport.authenticate('jwt')
 
@@ -14,15 +14,9 @@ router.get('/listRequest', authenticate, (req, res, next) => {
     return next(createError(400, 'userId not found'))
   }
 
-  Chat.find({ users: userId })
-    .populate('users')
-    .exec((err, chatsList) => {
-      if (err) {
-        return next(createError(400, err.message))
-      }
+  const json = res.json.bind(res)
 
-      res.json(chatsList)
-    })
+  dal.getUserChats(userId, json, next)
 })
 
 router.post('/new', authenticate, (req, res, next) => {
@@ -40,15 +34,9 @@ router.post('/new', authenticate, (req, res, next) => {
     return next(createError(400, wrongFieldNameString))
   }
 
-  const newChat = new Chat(chat)
+  const json = res.json.bind(res)
 
-  newChat.save(function(err) {
-    if (err) {
-      return next(createError(400, err.message))
-    }
-
-    res.json({ chat: newChat })
-  })
+  dal.saveChat(chat, json, next)
 })
 
 router.post('/addNewUser', authenticate, (req, res, next) => {
@@ -60,15 +48,9 @@ router.post('/addNewUser', authenticate, (req, res, next) => {
     body: { chatId, newUserId },
   } = req
 
-  Chat.update({ _id: chatId }, { $addToSet: { users: newUserId } }).exec(
-    (err, updatedChat) => {
-      if (err) {
-        return next(createError(400, err.message))
-      }
+  const json = res.json.bind(res)
 
-      res.json({ chat: updatedChat })
-    }
-  )
+  dal.addNewUserToChat(chatId, newUserId, json, next)
 })
 
 module.exports = router
