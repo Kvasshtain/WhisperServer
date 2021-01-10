@@ -33,23 +33,23 @@ const UserSchema = new Schema(
   }
 )
 
-const createHashFromPassword = function(password, salt) {
+const createHashFromPassword = function (password, salt) {
   return crypto
     .pbkdf2Sync(password, salt, iterations, keylen, digest)
     .toString(stringType)
 }
 
-UserSchema.methods.setPassword = function(password) {
+UserSchema.methods.setPassword = function (password) {
   this.salt = crypto.randomBytes(sizeRandomBytes).toString(stringType)
   this.hash = createHashFromPassword(password, this.salt)
 }
 
-UserSchema.methods.checkPassword = function(password) {
+UserSchema.methods.checkPassword = function (password) {
   const hash = createHashFromPassword(password, this.salt)
   return this.hash === hash
 }
 
-UserSchema.methods.generateJWT = function() {
+UserSchema.methods.generateJWT = function () {
   const today = new Date()
   const expirationDate = new Date(today)
   expirationDate.setDate(today.getDate() + expiration)
@@ -68,7 +68,7 @@ UserSchema.methods.generateJWT = function() {
   )
 }
 
-UserSchema.methods.toAuthJSON = function() {
+UserSchema.methods.toAuthJSON = function () {
   return {
     _id: this._id,
     email: this.email,
@@ -77,7 +77,7 @@ UserSchema.methods.toAuthJSON = function() {
   }
 }
 
-UserSchema.methods.toJSON = function() {
+UserSchema.methods.toJSON = function () {
   var obj = this.toObject()
   delete obj.hash
   delete obj.salt

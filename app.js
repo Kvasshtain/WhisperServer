@@ -3,7 +3,9 @@ const express = require('express')
 const passport = require('passport')
 const bodyParser = require('body-parser')
 const http = require('http')
-const port = process.env.PORT || 4000;
+const port = process.env.PORT || 4000
+// const { Pool } = require('pg')
+// const connectionString = 'postgresql://dbuser:secretpassword@database.server.com:3211/mydb'
 
 const app = express()
 
@@ -29,9 +31,9 @@ require('./webSocket/webSocketInit')(httpServer)
 mongoose.connect(
   'mongodb://localhost:27017/whisperdb',
   { useNewUrlParser: true },
-  function(err) {
+  function (err) {
     if (err) return console.log(err)
-    httpServer.listen(port, function() {
+    httpServer.listen(port, function () {
       console.log('Сервер ожидает подключения...')
     })
   }

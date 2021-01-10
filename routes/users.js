@@ -3,7 +3,7 @@ const router = express.Router()
 const passport = require('passport')
 const { checkUserFieldsAndReturnWrong } = require('../helper')
 const createError = require('http-errors')
-const dal = require('../mongo/dal')
+const dal = require('../mongoose/dal')
 
 const authenticate = passport.authenticate('jwt')
 
@@ -47,10 +47,7 @@ router.post('/login', (req, res, next) => {
     }
 
     if (passportUser) {
-      const user = passportUser
-      user.token = passportUser.generateJWT()
-
-      return res.json({ user: user.toAuthJSON() })
+      return res.json({ user: passportUser.toAuthJSON() })
     }
 
     return next(createError(400, err.message))
