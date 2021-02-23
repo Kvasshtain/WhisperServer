@@ -3,7 +3,7 @@ const router = express.Router()
 const passport = require('passport')
 const { checkChatFieldsAndReturnWrong } = require('../helper')
 const createError = require('http-errors')
-const dal = require('../mongoose/dal')
+const dal = require('../sequelizeDal/dal')
 
 const authenticate = passport.authenticate('jwt')
 

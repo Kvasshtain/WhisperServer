@@ -1,7 +1,7 @@
 const passport = require('passport')
 const LocalStrategy = require('passport-local')
 const { Strategy: JwtStrategy, ExtractJwt } = require('passport-jwt')
-const dal = require('../mongoose/dal')
+const dal = require('../sequelizeDal/dal')
 
 const jwtSecret = require('../appConfig').jwtSecret
 
@@ -26,10 +26,14 @@ const jwtOptions = {
 
 passport.use(
   new JwtStrategy(jwtOptions, function (payload, done) {
-    dal.findUserById(payload.id, done)
+    dal.passportFindUserById(payload.id, done)
   })
 )
 
 passport.serializeUser(function (user, done) {
-  done(null, user.id)
+  done(null, user)
+})
+
+passport.deserializeUser(function (user, done) {
+  done(null, user)
 })

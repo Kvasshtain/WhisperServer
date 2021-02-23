@@ -1,8 +1,10 @@
 const ws = new require('ws')
-const chatUpdateCallbacks = require('../models/Message').chatUpdateCallbacks
-const Chat = require('../models/Chat')
+const dal = require('../sequelizeDal/dal')
 
-module.exports = function(httpServer) {
+const chatUpdateCallbacks = require('../sequelizeModels/Message')
+  .chatUpdateCallbacks
+
+module.exports = function (httpServer) {
   const wsServer = new ws.Server({
     server: httpServer,
   })
@@ -10,11 +12,7 @@ module.exports = function(httpServer) {
   wsServer.on('connection', function connection(ws, req) {
     const chatId = req.url.slice(1)
 
-    Chat.findById(chatId).exec((err, chat) => {
-      if (err) {
-        return next(createError(400, err.message))
-      }
-
+    dal.findChatById(chatId, (chat) => {
       if (!chat) return
 
       if (!chatUpdateCallbacks.has(chatId)) {
@@ -22,12 +20,24 @@ module.exports = function(httpServer) {
       }
 
       chatUpdateCallbacks.get(chatId).set(ws, (actionType, message) => {
-        ws.send(
-          JSON.stringify({
-            actionType,
-            message,
-          })
-        )
+        dal.findUserById(message.UserId, (user) => {
+          messageInfo = {
+            _id: message._id,
+            clientSideId: message.clientSideId,
+            text: message.text,
+            time: message.time,
+            authorId: user._id,
+            authorEmail: user.email,
+            authorName: user.name,
+          }
+
+          ws.send(
+            JSON.stringify({
+              actionType,
+              message: messageInfo,
+            })
+          )
+        })
       })
     })
 

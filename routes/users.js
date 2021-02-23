@@ -3,7 +3,7 @@ const router = express.Router()
 const passport = require('passport')
 const { checkUserFieldsAndReturnWrong } = require('../helper')
 const createError = require('http-errors')
-const dal = require('../mongoose/dal')
+const dal = require('../sequelizeDal/dal')
 
 const authenticate = passport.authenticate('jwt')
 
@@ -21,9 +21,7 @@ router.post('/new', (req, res, next) => {
     return next(createError(400, wrongFieldNameString))
   }
 
-  const json = res.json.bind(res)
-
-  dal.saveNewUser(user, json, next)
+  dal.saveNewUser(user, next)
 })
 
 router.post('/login', (req, res, next) => {
@@ -47,7 +45,13 @@ router.post('/login', (req, res, next) => {
     }
 
     if (passportUser) {
-      return res.json({ user: passportUser.toAuthJSON() })
+      return dal.findUserById(
+        passportUser._id,
+        (foundUser) => {
+          res.json({ user: foundUser.toAuthJSON() })
+        },
+        next
+      )
     }
 
     return next(createError(400, err.message))
@@ -63,7 +67,7 @@ router.get('/search', authenticate, (req, res, next) => {
 
   const json = res.json.bind(res)
 
-  dal.findUser(email, json, next)
+  dal.findUsersByEmail(email, json, next)
 })
 
 module.exports = router
