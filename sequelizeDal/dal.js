@@ -215,6 +215,10 @@ let dal = {
   },
 
   saveNewUser: (user, next) => {
+    console.log('!!!!!!!!!!!!!!!!!!!!!!')
+    console.log(user)
+    console.log('!!!!!!!!!!!!!!!!!!!!!!')
+
     User.findAll({ where: { email: user.email } }).then((users) => {
       if (users.length !== 0) {
         next(createError(500, 'User with same email already exists'))
