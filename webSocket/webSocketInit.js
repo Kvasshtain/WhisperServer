@@ -5,11 +5,19 @@ const chatUpdateCallbacks = require('../sequelizeModels/Message')
   .chatUpdateCallbacks
 
 module.exports = function (httpServer) {
+  function noop() {}
+
+  function heartbeat() {
+    this.isAlive = true
+  }
+
   const wsServer = new ws.Server({
     server: httpServer,
   })
 
   wsServer.on('connection', function connection(ws, req) {
+    ws.isAlive = true
+    ws.on('pong', heartbeat)
     const chatId = req.url.slice(1)
 
     dal.findChatById(chatId, (chat) => {
@@ -44,6 +52,19 @@ module.exports = function (httpServer) {
     ws.on('close', () => {
       chatUpdateCallbacks.get(chatId).delete(ws)
     })
+  })
+
+  const interval = setInterval(function ping() {
+    wsServer.clients.forEach(function each(ws) {
+      if (ws.isAlive === false) return ws.terminate()
+
+      ws.isAlive = false
+      ws.ping(noop)
+    })
+  }, 30000)
+
+  wsServer.on('close', function close() {
+    clearInterval(interval)
   })
 
   return wsServer
