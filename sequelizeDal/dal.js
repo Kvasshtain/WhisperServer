@@ -1,8 +1,10 @@
 const Chat = require('../sequelizeModels/Chat')
 const Message = require('../sequelizeModels/Message')
 const User = require('../sequelizeModels/User')
+const Enrolment = require('../sequelizeModels/Enrolment')
 const createError = require('http-errors')
 let Sequelize = require('sequelize')
+const sequelize = require('../sequelizeConnection/connection')
 
 const Op = Sequelize.Op
 
@@ -105,6 +107,44 @@ let dal = {
       .catch((err) => {
         next(createError(400, err.message))
       })
+  },
+
+  deletChat: async (chatId, done, next) => {
+    try {
+      await sequelize.transaction(async (t) => {
+      const chat = await Chat.findByPk(chatId, { transaction: t })
+
+      chat.getUsers().then(async users => {
+        for(user of users){
+          await user.enrolment.destroy({ transaction: t })
+        }
+      })
+
+      await Chat.destroy({where: {
+          _id: chatId,
+        }
+      },{ transaction: t })
+        if(done) {
+          done(chat)
+        }
+      });
+    } catch (error) {
+      next(createError(400, err.message))
+    }
+  },
+
+  updateChat: (chat, done, next) => {
+    Chat.update({
+      text: chat.text
+    }, {
+      where: {
+        _id: chat._id
+      }
+    }).then((updatedChat) => {
+      done(updatedChat)
+    }).catch((err) => {
+      next(createError(400, err.message))
+    })
   },
 
   getMessagesInformation: (messagesList, done) => {
@@ -214,11 +254,33 @@ let dal = {
       })
   },
 
-  saveNewUser: (user, next) => {
-    console.log('!!!!!!!!!!!!!!!!!!!!!!')
-    console.log(user)
-    console.log('!!!!!!!!!!!!!!!!!!!!!!')
+  deletMessage: (messageId, done, next) => {
+    Message.destroy({
+      where: {
+        _id: messageId,
+      }
+    }).then((deletedMessage) => {
+      done(deletedMessage)
+    }).catch((err) => {
+      next(createError(400, err.message))
+    })
+  },
 
+  updateMessage: (message, done, next) => {
+    Message.update({
+      text: message.text
+    }, {
+      where: {
+        _id: message._id
+      }
+    }).then((updatedMessage) => {
+      done(updatedMessage)
+    }).catch((err) => {
+      next(createError(400, err.message))
+    })
+  },
+
+  saveNewUser: (user, next) => {
     User.findAll({ where: { email: user.email } }).then((users) => {
       if (users.length !== 0) {
         next(createError(500, 'User with same email already exists'))

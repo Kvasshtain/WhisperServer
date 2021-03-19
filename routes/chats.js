@@ -7,11 +7,14 @@ const dal = require('../sequelizeDal/dal')
 
 const authenticate = passport.authenticate('jwt')
 
+const bodyNotFoundMessage = 'Bad request. Body not found.'
+const userIdNotFoundMessage = 'userId not found'
+
 router.get('/listRequest', authenticate, (req, res, next) => {
   const userId = req.query.user_id
 
   if (!userId) {
-    return next(createError(400, 'userId not found'))
+    return next(createError(400, userIdNotFoundMessage))
   }
 
   const json = res.json.bind(res)
@@ -21,7 +24,7 @@ router.get('/listRequest', authenticate, (req, res, next) => {
 
 router.post('/new', authenticate, (req, res, next) => {
   if (!req.body) {
-    return next(createError(400, 'Bad request. Body not found.'))
+    return next(createError(400, bodyNotFoundMessage))
   }
 
   const {
@@ -41,7 +44,7 @@ router.post('/new', authenticate, (req, res, next) => {
 
 router.post('/addNewUser', authenticate, (req, res, next) => {
   if (!req.body) {
-    return next(createError(400, 'Bad request. Body not found.'))
+    return next(createError(400, bodyNotFoundMessage))
   }
 
   const {
@@ -51,6 +54,28 @@ router.post('/addNewUser', authenticate, (req, res, next) => {
   const json = res.json.bind(res)
 
   dal.addNewUserToChat(chatId, newUserId, json, next)
+})
+
+router.delete('/delete', authenticate, (req, res, next) => {
+  if (!req.body) {
+    return next(createError(400, bodyNotFoundMessage))
+  }
+
+  const chatId = req.body
+  const json = res.json.bind(res)
+
+  dal.deletChat(chatId, json, next)
+})
+
+router.put('/update', authenticate, (req, res, next) => {
+  if (!req.body) {
+    return next(createError(400, bodyNotFoundMessage))
+  }
+
+  const chat = req.body
+  const json = res.json.bind(res)
+
+  dal.updateChat(chat, json, next)
 })
 
 module.exports = router

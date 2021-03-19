@@ -25,7 +25,7 @@ Chat.init(
   }
 )
 
-Chat.hasMany(Message)
+Chat.hasMany(Message, { onDelete: "cascade"})
 Chat.belongsToMany(User, { through: Enrolment })
 User.belongsToMany(Chat, { through: Enrolment })
 

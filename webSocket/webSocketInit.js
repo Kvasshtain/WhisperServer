@@ -50,7 +50,10 @@ module.exports = function (httpServer) {
     })
 
     ws.on('close', () => {
-      chatUpdateCallbacks.get(chatId).delete(ws)
+      const chat = chatUpdateCallbacks.get(chatId)
+      if (chat){
+        chat.delete(ws)
+      }
     })
   })
 
